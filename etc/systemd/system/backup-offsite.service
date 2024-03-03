@@ -1,5 +1,5 @@
 [Unit]
-Description=Backup to s3 deep glacier
+Description=Backup to s3 deep glacier using rustic
 
 [Service]
 EnvironmentFile=/etc/restic/*.source

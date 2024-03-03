@@ -1,0 +1,3 @@
+RESTIC_REPOSITORY=/backups/restic-repos/mybackups
+RESTIC_PASSWORD_FILE=/etc/restic/pw
+

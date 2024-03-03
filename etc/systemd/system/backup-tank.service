@@ -7,7 +7,7 @@ Type=oneshot
 SuccessExitStatus=24
 
 # Default environment vars
-Environment='SOURCE=/storage /usr/local/ /home /root /etc /data /videos /var/lib/mysql /var/lib/mythtv'
+Environment='SOURCE=/storage /usr/local/ /home /root /etc /data /videos /var/lib/mysql /var/lib/mythtv /usr/local'
 Environment='TARGET=/tank/%H'
 
 # Alternative environment vars
