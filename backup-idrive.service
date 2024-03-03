@@ -1,0 +1,17 @@
+[Unit]
+Description=Backup to idrive
+
+[Service]
+ExecStart=/usr/local/bin/rclone-backup.sh
+Nice=10
+
+ExecStopPost=/usr/local/bin/mail.sh \
+  -s "${SERVICE_RESULT}, service: %n, host: %H" \
+  -c /usr/bin/date \
+  -b "Host: %H\nService: %n" \
+  -b "Invocation ID: ${INVOCATION_ID}" \
+  -b "Service Result: ${SERVICE_RESULT}" \
+  -b "Exit Code: ${EXIT_CODE}" \
+  -b "Exit Status: ${EXIT_STATUS}" \
+  -b "Log:" \
+  -c "/usr/bin/journalctl -n 100 INVOCATION_ID=${INVOCATION_ID} + _SYSTEMD_INVOCATION_ID=${INVOCATION_ID}"

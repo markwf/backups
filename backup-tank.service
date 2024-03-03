@@ -1,0 +1,47 @@
+[Unit]
+Description=Backup to tank
+
+[Service]
+Type=oneshot
+# rsync success - Partial transfer due to vanished source files
+SuccessExitStatus=24
+
+# Default environment vars
+Environment='SOURCE=/storage /usr/local/ /home /root /etc /data /videos /var/lib/mysql /var/lib/mythtv'
+Environment='TARGET=/tank/%H'
+
+# Alternative environment vars
+#EnvironmentFile=/etc/backup-tank/env
+
+ExecStartPre=/usr/bin/echo -e "Backing up to: ${TARGET} on %H\nSource directories:\n${SOURCE}"
+ExecStartPre=/usr/bin/test -d ${TARGET}/current
+ExecStartPre=/usr/bin/test -r /etc/backup-tank/exclude
+
+# Test list parameters - ExecStart=/root/list.sh /usr/bin/rsync -aH \
+ExecStart=/usr/bin/rsync -aHl \
+    --stats \
+    --delete \
+    --link-dest=${TARGET}/current/ \
+    --exclude-from=/etc/backup-tank/exclude \
+    $SOURCE \
+    ${TARGET}/new/
+
+# Tidy up and set current symbolic link
+ExecStartPost=/usr/bin/sh -c '\
+  NAME=snapshot_$(date "+%%Y-%%m-%%d_%%H%%M%%S"); \
+  /usr/bin/mv -v ${TARGET}/new ${TARGET}/$${NAME} && \
+  /usr/bin/rm -fv ${TARGET}/current && \
+  /usr/bin/ln -sv $$NAME ${TARGET}/current && \
+  /usr/bin/echo "Backups completed successfully"' 
+
+# Email status and journal of job to default sysadmin
+ExecStopPost=/usr/local/bin/mail.sh \
+  -s "${SERVICE_RESULT}, %H %n" \
+  -c /usr/bin/date \
+  -b "Host: %H\nService: %n" \
+  -b "Invocation ID: ${INVOCATION_ID}" \
+  -b "Service Result: ${SERVICE_RESULT}" \
+  -b "Exit Code: ${EXIT_CODE}" \
+  -b "Exit Status: ${EXIT_STATUS}" \
+  -b "Log:" \
+  -c "/usr/bin/journalctl -n 100 INVOCATION_ID=${INVOCATION_ID} + _SYSTEMD_INVOCATION_ID=${INVOCATION_ID}"

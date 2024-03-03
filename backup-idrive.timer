@@ -1,0 +1,11 @@
+[Unit]
+Description="Automatically run cloud backups daily"
+
+[Timer]
+OnCalendar=*-*-* 01:00:00
+Persistent=false
+OnStartupSec=30m
+RandomizedDelaySec=20m
+
+[Install]
+WantedBy=timers.target

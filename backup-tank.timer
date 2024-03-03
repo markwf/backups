@@ -1,0 +1,11 @@
+[Unit]
+Description="Automatically run local backups"
+
+[Timer]
+OnCalendar=*-*-* 05:00:00
+Persistent=true
+#OnStartupSec=30m
+#RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

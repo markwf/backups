@@ -1,0 +1,37 @@
+[Unit]
+Description=Backup to s3 deep glacier
+
+[Service]
+EnvironmentFile=/etc/restic/*.source
+Environment="HOME=/%u"
+Type=oneshot
+Nice=10
+
+ExecStart=/usr/bin/restic check
+
+ExecStart=systemd-inhibit --what=shutdown:sleep --who=backups \
+    --why="Backups restic cmd in progress, shutdown blocked" \
+  /usr/bin/restic backup --files-from=/etc/restic/offsite-files \
+    --cache-dir /%u/.config/restic \
+    -x --exclude-caches --quiet \
+    --tag=scheduled --tag=systemd
+
+ExecStart=/usr/bin/echo "restic backup completed"
+
+ExecStart=/usr/bin/aws s3 sync \
+     --no-progress --no-follow-symlinks --quiet \
+     "$RESTIC_REPOSITORY" "$AWS_BUCKET"
+
+ExecStart=/usr/bin/echo "aws sync completed"
+
+# Email status and journal of job to default sysadmin
+ExecStopPost=/usr/local/bin/mail.sh \
+  -s "${SERVICE_RESULT}, %H %n" \
+  -c /usr/bin/date \
+  -b "Host: %H\nService: %n" \
+  -b "Invocation ID: ${INVOCATION_ID}" \
+  -b "Service Result: ${SERVICE_RESULT}" \
+  -b "Exit Code: ${EXIT_CODE}" \
+  -b "Exit Status: ${EXIT_STATUS}" \
+  -b "Log:" \
+  -c "/usr/bin/journalctl -n 100 INVOCATION_ID=${INVOCATION_ID} + _SYSTEMD_INVOCATION_ID=${INVOCATION_ID}"
